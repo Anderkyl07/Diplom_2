@@ -8,6 +8,9 @@ import io.restassured.response.Response;
 import org.junit.After;
 import org.junit.Before;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static io.restassured.RestAssured.given;
 
 public class BaseTest {
@@ -26,10 +29,10 @@ public class BaseTest {
     }
 
     protected String registerUser(String email, String password, String name) {
-        String requestBody = String.format(
-                "{\"email\": \"%s\", \"password\": \"%s\", \"name\": \"%s\"}",
-                email, password, name
-        );
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("email", email);
+        requestBody.put("password", password);
+        requestBody.put("name", name);
 
         Response response = given()
                 .header("Content-type", "application/json")

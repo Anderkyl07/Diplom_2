@@ -6,7 +6,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -28,9 +31,7 @@ public class OrderCreationTest extends BaseTest {
 
     @Test
     public void createOrderWithAuthorizationAndIngredients_Success() {
-        // Берем только первые 2 валидных ингредиента чтобы избежать 500 ошибки
         String[] ingredients = {validIngredients.get(0), validIngredients.get(1)};
-
         createOrderRequest(accessToken, ingredients)
                 .then()
                 .statusCode(200)
@@ -41,9 +42,7 @@ public class OrderCreationTest extends BaseTest {
 
     @Test
     public void createOrderWithoutAuthorizationWithIngredients_Success() {
-        // Берем только первые 2 валидных ингредиента
         String[] ingredients = {validIngredients.get(0), validIngredients.get(1)};
-
         createOrderRequest(null, ingredients)
                 .then()
                 .statusCode(200)
@@ -64,7 +63,6 @@ public class OrderCreationTest extends BaseTest {
     @Test
     public void createOrderWithInvalidIngredientHash_ReturnsError() {
         String[] invalidIngredients = {"invalid_hash_1", "invalid_hash_2"};
-
         createOrderRequest(accessToken, invalidIngredients)
                 .then()
                 .statusCode(500);
@@ -72,13 +70,7 @@ public class OrderCreationTest extends BaseTest {
 
     @Test
     public void createOrderWithAuthorizationAndMultipleIngredients_Success() {
-        // Берем только первые 3 валидных ингредиента
-        String[] ingredients = {
-                validIngredients.get(0),
-                validIngredients.get(1),
-                validIngredients.get(2)
-        };
-
+        String[] ingredients = {validIngredients.get(0), validIngredients.get(1), validIngredients.get(2)};
         createOrderRequest(accessToken, ingredients)
                 .then()
                 .statusCode(200)
@@ -91,34 +83,25 @@ public class OrderCreationTest extends BaseTest {
         Response response = given()
                 .when()
                 .get("/ingredients");
-
-        // Правильный способ получить ID ингредиентов
         return response.jsonPath().getList("data._id");
     }
 
     @Step("Создать заказ с ингредиентами: {ingredients}")
     private Response createOrderRequest(String token, String[] ingredients) {
-        // Создаем правильный JSON массив
-        StringBuilder ingredientsJson = new StringBuilder("{\"ingredients\": [");
-        for (int i = 0; i < ingredients.length; i++) {
-            ingredientsJson.append("\"").append(ingredients[i]).append("\"");
-            if (i < ingredients.length - 1) {
-                ingredientsJson.append(", ");
-            }
-        }
-        ingredientsJson.append("]}");
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("ingredients", Arrays.asList(ingredients));
 
         if (token != null) {
             return given()
                     .header("Content-type", "application/json")
                     .header("Authorization", token)
-                    .body(ingredientsJson.toString())
+                    .body(requestBody)
                     .when()
                     .post("/orders");
         } else {
             return given()
                     .header("Content-type", "application/json")
-                    .body(ingredientsJson.toString())
+                    .body(requestBody)
                     .when()
                     .post("/orders");
         }

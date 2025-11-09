@@ -6,7 +6,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -25,7 +28,6 @@ public class UserOrdersTest extends BaseTest {
         accessToken = registerUser(testEmail, testPassword, testName);
         validIngredients = getValidIngredients();
 
-        // Создаем тестовый заказ для пользователя (используем только 2 ингредиента)
         String[] ingredients = {validIngredients.get(0), validIngredients.get(1)};
         createOrderRequest(accessToken, ingredients);
     }
@@ -78,25 +80,18 @@ public class UserOrdersTest extends BaseTest {
         Response response = given()
                 .when()
                 .get("/ingredients");
-
         return response.jsonPath().getList("data._id");
     }
 
     @Step("Создать заказ с ингредиентами: {ingredients}")
     private Response createOrderRequest(String token, String[] ingredients) {
-        StringBuilder ingredientsJson = new StringBuilder("{\"ingredients\": [");
-        for (int i = 0; i < ingredients.length; i++) {
-            ingredientsJson.append("\"").append(ingredients[i]).append("\"");
-            if (i < ingredients.length - 1) {
-                ingredientsJson.append(", ");
-            }
-        }
-        ingredientsJson.append("]}");
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("ingredients", Arrays.asList(ingredients));
 
         return given()
                 .header("Content-type", "application/json")
                 .header("Authorization", token)
-                .body(ingredientsJson.toString())
+                .body(requestBody)
                 .when()
                 .post("/orders");
     }

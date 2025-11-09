@@ -6,6 +6,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
@@ -50,10 +53,10 @@ public class UserUpdateTest extends BaseTest {
     public void updateUserPasswordWithAuthorization_Success() {
         String newPassword = "newpassword123";
 
-        String requestBody = String.format(
-                "{\"email\": \"%s\", \"password\": \"%s\", \"name\": \"%s\"}",
-                testEmail, newPassword, testName
-        );
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("email", testEmail);
+        requestBody.put("password", newPassword);
+        requestBody.put("name", testName);
 
         updateUserRequest(accessToken, requestBody)
                 .then()
@@ -74,32 +77,28 @@ public class UserUpdateTest extends BaseTest {
 
     @Test
     public void updateUserWithExistingEmail_ReturnsError() {
-        // Создаем второго пользователя
         String secondUserEmail = generateRandomEmail();
         String secondUserToken = registerUser(secondUserEmail, "password456", "Second User");
 
-        // Пытаемся обновить email первого пользователя на email второго
         updateUserRequest(accessToken, secondUserEmail, testName)
                 .then()
                 .statusCode(403)
                 .body("success", equalTo(false))
                 .body("message", equalTo("User with such email already exists"));
 
-        // Удаляем второго пользователя
         deleteUser(secondUserToken);
     }
 
     @Step("Обновить данные пользователя с email: {email}, name: {name}")
     private Response updateUserRequest(String token, String email, String name) {
-        String requestBody = String.format(
-                "{\"email\": \"%s\", \"name\": \"%s\"}",
-                email, name
-        );
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("email", email);
+        requestBody.put("name", name);
         return updateUserRequest(token, requestBody);
     }
 
     @Step("Обновить данные пользователя с телом запроса: {requestBody}")
-    private Response updateUserRequest(String token, String requestBody) {
+    private Response updateUserRequest(String token, Map<String, Object> requestBody) {
         if (token != null) {
             return given()
                     .header("Content-type", "application/json")

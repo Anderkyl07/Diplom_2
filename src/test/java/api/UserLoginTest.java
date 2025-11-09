@@ -6,6 +6,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
@@ -45,7 +48,8 @@ public class UserLoginTest extends BaseTest {
 
     @Test
     public void loginWithoutPassword_ReturnsError() {
-        String requestBody = String.format("{\"email\": \"%s\"}", testEmail);
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("email", testEmail);
 
         given()
                 .header("Content-type", "application/json")
@@ -60,10 +64,9 @@ public class UserLoginTest extends BaseTest {
 
     @Step("Авторизоваться с email: {email}, password: {password}")
     private Response loginUserRequest(String email, String password) {
-        String requestBody = String.format(
-                "{\"email\": \"%s\", \"password\": \"%s\"}",
-                email, password
-        );
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("email", email);
+        requestBody.put("password", password);
 
         return given()
                 .header("Content-type", "application/json")

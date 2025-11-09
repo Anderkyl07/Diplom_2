@@ -4,6 +4,9 @@ import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
@@ -31,10 +34,7 @@ public class UserRegistrationTest extends BaseTest {
         String password = "password123";
         String name = "Test User";
 
-        // Создаем пользователя первый раз
         createUserRequest(email, password, name);
-
-        // Пытаемся создать того же пользователя второй раз
         createUserRequest(email, password, name)
                 .then()
                 .statusCode(403)
@@ -46,12 +46,10 @@ public class UserRegistrationTest extends BaseTest {
     public void createUserWithoutRequiredField_ReturnsError() {
         String email = generateRandomEmail();
         String password = "password123";
-        // Не передаем поле name
 
-        String requestBody = String.format(
-                "{\"email\": \"%s\", \"password\": \"%s\"}",
-                email, password
-        );
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("email", email);
+        requestBody.put("password", password);
 
         createUserRequest(requestBody)
                 .then()
@@ -62,15 +60,15 @@ public class UserRegistrationTest extends BaseTest {
 
     @Step("Создать пользователя с email: {email}, password: {password}, name: {name}")
     private Response createUserRequest(String email, String password, String name) {
-        String requestBody = String.format(
-                "{\"email\": \"%s\", \"password\": \"%s\", \"name\": \"%s\"}",
-                email, password, name
-        );
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("email", email);
+        requestBody.put("password", password);
+        requestBody.put("name", name);
         return createUserRequest(requestBody);
     }
 
     @Step("Создать пользователя с телом запроса: {requestBody}")
-    private Response createUserRequest(String requestBody) {
+    private Response createUserRequest(Map<String, Object> requestBody) {
         return given()
                 .header("Content-type", "application/json")
                 .body(requestBody)
